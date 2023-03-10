@@ -20,10 +20,7 @@ builder.Host.UseSerilog((context, provider, loggerConfig) => loggerConfig
 builder.Services.AddLogging();
 
 builder.Services.AddAuthentication().AddJwtBearer();
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("user", policyBuilder => policyBuilder.RequireClaim("user"));
-});
+builder.Services.AddAuthorization(options => { options.AddPolicy("user", policyBuilder => policyBuilder.RequireClaim("user")); });
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -36,27 +33,7 @@ string serviceName = builder.Environment.ApplicationName;
 var version = typeof(Program).GetTypeInfo().Assembly.GetName().Version?.ToString();
 ResourceBuilder resourceBuilder = ResourceBuilder.CreateDefault().AddService(serviceName, version);
 
-builder.Services.AddOpenTelemetry().WithTracing(providerBuilder =>
-{
-    providerBuilder.AddSource(serviceName).SetResourceBuilder(resourceBuilder);
-    providerBuilder.AddHttpClientInstrumentation();
-    providerBuilder.AddAspNetCoreInstrumentation();
-
-    providerBuilder.AddJaegerExporter(options =>
-    {
-        string? endpointUriAddress = builder.Configuration["JaegerExporter:EndpointUri"];
-
-        bool goodUri = Uri.TryCreate(endpointUriAddress, UriKind.Absolute, out Uri? endpointUri);
-
-        if (goodUri is false)
-        {
-            return;
-        }
-
-        options.Endpoint = endpointUri;
-        options.Protocol = JaegerExportProtocol.HttpBinaryThrift;
-    });
-});
+builder.Services.AddOpenTelemetry().WithTracing(providerBuilder => { ConfigureTracing(providerBuilder, serviceName, resourceBuilder, builder); });
 
 WebApplication app = builder.Build();
 
@@ -92,3 +69,31 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
+
+static void ConfigureTracing(
+    TracerProviderBuilder tracerProviderBuilder,
+    string source,
+    ResourceBuilder resourceBuilder,
+    WebApplicationBuilder webApplicationBuilder)
+{
+    tracerProviderBuilder.AddSource(source).SetResourceBuilder(resourceBuilder);
+    tracerProviderBuilder.AddHttpClientInstrumentation();
+    tracerProviderBuilder.AddAspNetCoreInstrumentation();
+
+    tracerProviderBuilder.AddJaegerExporter(options => { ConfigureJaegerExporter(webApplicationBuilder, options); });
+}
+
+static void ConfigureJaegerExporter(WebApplicationBuilder webApplicationBuilder, JaegerExporterOptions jaegerExporterOptions)
+{
+    string? endpointUriAddress = webApplicationBuilder.Configuration["JaegerExporter:EndpointUri"];
+
+    bool goodUri = Uri.TryCreate(endpointUriAddress, UriKind.Absolute, out Uri? endpointUri);
+
+    if (goodUri is false)
+    {
+        return;
+    }
+
+    jaegerExporterOptions.Endpoint = endpointUri;
+    jaegerExporterOptions.Protocol = JaegerExportProtocol.HttpBinaryThrift;
+}
