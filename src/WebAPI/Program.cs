@@ -18,6 +18,13 @@ builder.Host.UseSerilog((context, provider, loggerConfig) => loggerConfig
     .ReadFrom.Services(provider));
 
 builder.Services.AddLogging();
+
+builder.Services.AddAuthentication().AddJwtBearer();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("user", policyBuilder => policyBuilder.RequireClaim("user"));
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
