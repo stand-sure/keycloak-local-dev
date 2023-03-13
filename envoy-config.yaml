@@ -31,10 +31,16 @@ static_resources:
                   audiences:
                     - demo-app
                   forward: true
+                  payload_in_metadata: jwt_payload
+                  claim_to_headers:
+                    - header_name: x-sub
+                      claim_name: sub
+                    - header_name: x-scope
+                      claim_name: scope
                   remote_jwks:
                     http_uri:
                       uri: http://identity_cluster/realms/master/protocol/openid-connect/certs
-                      cluster: identity_provider
+                      cluster: identity_cluster
                       timeout: 5s
                     cache_duration:
                       seconds: 300
