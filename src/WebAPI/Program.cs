@@ -25,7 +25,11 @@ builder.Services.AddAuthorization(options => { options.AddPolicy("user", policyB
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+    options.CustomSchemaIds(type => type.FullName);
+});
 
 builder.Services.AddHealthChecks();
 
