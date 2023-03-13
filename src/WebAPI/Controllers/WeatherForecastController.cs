@@ -46,11 +46,11 @@ public class WeatherForecastController : ControllerBase
     /// <remarks>Anonymous</remarks>
     [AllowAnonymous]
     [HttpGet("NoAuth")]
-    public IEnumerable<WeatherForecast> GetNoAuth()
+    public IEnumerable<WeatherForecast> GetNoAuth([FromHeader(Name = "x-sub")] string? sub = null)
     {
         string name = MethodBase.GetCurrentMethod()!.GetCustomAttribute<HttpGetAttribute>()?.Template ?? throw new InvalidOperationException();
 
-        this.logger.LogInformation(WeatherForecastController.InformationMessageTemplate, name);
+        this.logger.LogInformation(WeatherForecastController.InformationMessageTemplate, $"{name} - {sub}");
 
         return GetWeatherForecastImplementation();
     }
