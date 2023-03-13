@@ -22,6 +22,22 @@ static_resources:
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
           http_filters:
+          - name: envoy.filters.http.jwt_authn
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+              providers:
+                provider1:
+                  issuer: http://localhost:8180/realms/master
+                  audiences:
+                    - demo-app
+                  forward: true
+                  remote_jwks:
+                    http_uri:
+                      uri: http://localhost:8180/realms/master/protocol/openid-connect/certs
+                      cluster: identity_provider
+                      timeout: 5s
+                    cache_duration:
+                      seconds: 300
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -49,3 +65,16 @@ static_resources:
               socket_address:
                 port_value: 5054
                 address: 127.0.0.1
+  - name: identity_cluster
+    type: LOGICAL_DNS
+    dns_lookup_family: V4_ONLY
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: identity_provider
+      endpoints:
+        - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    port_value: 8081
+                    address: 127.0.0.1
