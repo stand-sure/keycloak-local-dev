@@ -33,11 +33,16 @@ static_resources:
                   forward: true
                   remote_jwks:
                     http_uri:
-                      uri: http://localhost:8180/realms/master/protocol/openid-connect/certs
+                      uri: http://identity_cluster/realms/master/protocol/openid-connect/certs
                       cluster: identity_provider
                       timeout: 5s
                     cache_duration:
                       seconds: 300
+              rules:
+                - match:
+                    prefix: /
+                  requires:
+                    provider_name: provider1
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -76,5 +81,5 @@ static_resources:
             - endpoint:
                 address:
                   socket_address:
-                    port_value: 8081
+                    port_value: 8180
                     address: 127.0.0.1

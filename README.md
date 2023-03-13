@@ -34,6 +34,4 @@ Keycloak will be available at http://localhost:8180
 *This has the advantage of moving a concern that can change out to config (i.e. the pp itself doen't need updated or redeployed)*
 
 - `./start-envoy.sh` # listens on 9999
-- Do NOT explicitly get the tokens (Insomnia will do the flow if the envoy filter is working)
 - `GET http://localhost:9999/WeatherForecast/NoAuth`
-- You should be redirected to sign in
