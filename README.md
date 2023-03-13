@@ -31,7 +31,7 @@ Keycloak will be available at http://localhost:8180
 
 ### Use Envoy to validate in lieu of .NET code
 
-*This has the advantage of moving a concern that can change out to config (i.e. the pp itself doen't need updated or redeployed)*
+*This has the advantage of moving a concern that can change out to config (i.e. the app itself doen't need updated or redeployed)*
 
 - `./start-envoy.sh` # listens on 9999
 - `GET http://localhost:9999/WeatherForecast/NoAuth`
