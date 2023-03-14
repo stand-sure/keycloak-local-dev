@@ -12,7 +12,7 @@ services:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
     volumes:
-      - keycloak:/opt/keycloak/data/
+      - ./keycloak-data:/opt/keycloak/data/
     restart: always
     command:
       - "start-dev --http-port 8180"
@@ -34,3 +34,10 @@ services:
       - "--set=plugin.envoy_ext_authz_grpc.addr=:9191"
       - "--set=plugins.envoy_ext_authz_grpc.query=data.envoy.authz.allow"
       - "/policies"
+#  envoy:
+#    image: envoyproxy/envoy:v1.25.2
+#    ports:
+#      - "9999:9999"
+#      - "9902:9902"
+#    volumes:
+#      - ./envoy-config.yaml:/etc/envoy/envoy.yaml
