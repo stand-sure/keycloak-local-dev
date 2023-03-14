@@ -58,7 +58,7 @@ static_resources:
               failure_mode_allow: true
               grpc_service:
                 google_grpc:
-                  target_uri: 127.0.0.1:9191
+                  target_uri: 192.168.87.219:9191
                   stat_prefix: ext_authz
               transport_api_version: V3                
           - name: envoy.filters.http.router
@@ -87,7 +87,7 @@ static_resources:
             address:
               socket_address:
                 port_value: 5054
-                address: 127.0.0.1
+                address: 0.0.0.0
   - name: identity_cluster
     type: LOGICAL_DNS
     dns_lookup_family: V4_ONLY
@@ -100,7 +100,7 @@ static_resources:
                 address:
                   socket_address:
                     port_value: 8180
-                    address: 127.0.0.1
+                    address: 0.0.0.0
   - name: opa_cluster
     type: LOGICAL_DNS
     dns_lookup_family: V4_ONLY
@@ -113,4 +113,4 @@ static_resources:
                 address:
                   socket_address:
                     port_value: 9191
-                    address: 127.0.0.1
+                    address: 192.168.87.219
