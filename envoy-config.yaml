@@ -46,9 +46,21 @@ static_resources:
                       seconds: 300
               rules:
                 - match:
-                    prefix: /
+                    prefix: /WeatherForecast
                   requires:
                     provider_name: provider1
+          - name: envoy.ext_authz
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+              with_request_body:
+                max_request_bytes: 8192
+                allow_partial_message: true
+              failure_mode_allow: true
+              grpc_service:
+                google_grpc:
+                  target_uri: 127.0.0.1:9191
+                  stat_prefix: ext_authz
+              transport_api_version: V3                
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -88,4 +100,17 @@ static_resources:
                 address:
                   socket_address:
                     port_value: 8180
+                    address: 127.0.0.1
+  - name: opa_cluster
+    type: LOGICAL_DNS
+    dns_lookup_family: V4_ONLY
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: opa_provider
+      endpoints:
+        - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    port_value: 9191
                     address: 127.0.0.1
