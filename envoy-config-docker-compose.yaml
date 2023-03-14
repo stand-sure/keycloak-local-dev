@@ -87,7 +87,7 @@ static_resources:
             address:
               socket_address:
                 port_value: 5054
-                address: 192.168.87.219
+                address: macbook-pro.lan
   - name: identity_cluster
     type: LOGICAL_DNS
     dns_lookup_family: V4_ONLY
