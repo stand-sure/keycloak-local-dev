@@ -1,0 +1,116 @@
+admin:
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9902
+
+static_resources:
+  listeners:
+  - name: listener_1
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 9999
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          access_log:
+          - name: envoy.access_loggers.stdout
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+          http_filters:
+          - name: envoy.filters.http.jwt_authn
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+              providers:
+                provider1:
+                  issuer: http://localhost:8180/realms/master
+                  audiences:
+                    - demo-app
+                  forward: true
+                  payload_in_metadata: jwt_payload
+                  claim_to_headers:
+                    - header_name: x-sub
+                      claim_name: sub
+                    - header_name: x-scope
+                      claim_name: scope
+                  remote_jwks:
+                    http_uri:
+                      uri: http://identity_cluster/realms/master/protocol/openid-connect/certs
+                      cluster: identity_cluster
+                      timeout: 5s
+                    cache_duration:
+                      seconds: 300
+              rules:
+                - match:
+                    prefix: /WeatherForecast
+                  requires:
+                    provider_name: provider1
+          - name: envoy.ext_authz
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+              with_request_body:
+                max_request_bytes: 8192
+                allow_partial_message: true
+              failure_mode_allow: true
+              grpc_service:
+                google_grpc:
+                  target_uri: 192.168.87.219:9191
+                  stat_prefix: ext_authz
+              transport_api_version: V3                
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains: ["*"]
+              routes:
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: keycloak_demo_cluster
+  clusters:
+  - name: keycloak_demo_cluster 
+    type: LOGICAL_DNS
+    dns_lookup_family: V4_ONLY
+    connect_timeout: 5s
+    load_assignment:  
+      cluster_name: service_jwks
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                port_value: 5054
+                address: 192.168.87.219
+  - name: identity_cluster
+    type: LOGICAL_DNS
+    dns_lookup_family: V4_ONLY
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: identity_provider
+      endpoints:
+        - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    port_value: 8180
+                    address: keycloak
+  - name: opa_cluster
+    type: LOGICAL_DNS
+    dns_lookup_family: V4_ONLY
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: opa_provider
+      endpoints:
+        - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    port_value: 9191
+                    address: opa
